@@ -1,5 +1,5 @@
 {
-  "name": "gpttest",
+  "name": "oneday-weather-client",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
