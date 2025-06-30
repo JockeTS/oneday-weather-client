@@ -9,13 +9,14 @@ export default function WeatherScreen() {
 
     const [loading, setLoading] = useState(true);
     const [forecast, setForecast] = useState([]);
+    const [locationName, setLocationName] = useState();
 
     const scrollViewRef = useRef<ScrollView>(null);
 
     const today = new Date();
     const currentHour: number = today.getHours();
 
-    // Fetch weather data after component has rendered
+    // Effect: component mount -> fetch weather data
     useEffect(() => {
         async function getCurrentLocation() {
             const { status } = await Location.requestForegroundPermissionsAsync();
@@ -33,7 +34,7 @@ export default function WeatherScreen() {
         getCurrentLocation();
     }, []);
 
-    // Fetch weather data and set forecast state after location state update
+    // Effect: location state change -> fetch weather data and set forecast state
     useEffect(() => {
         // console.log(location);
 
@@ -61,14 +62,13 @@ export default function WeatherScreen() {
                 const data = await response.json();
 
                 // Create weather groups from hoursArray and update forecast state
-
-                // const hoursArray = await response.json();
                 const hoursArray = data?.forecast?.forecastday[0]?.hour;
-                const locationName = data?.location?.name;
-                console.log(locationName);
-
                 const weatherGroups = createWeatherGroups(hoursArray);
                 setForecast(weatherGroups);
+
+                // Update locationName state
+                const locationName = data?.location?.name;
+                setLocationName(locationName);
             } catch (error) {
                 console.error('Error fetching weather (in-app):', error);
             } finally {
@@ -84,6 +84,11 @@ export default function WeatherScreen() {
             fetchWeather();
         }
     }, [location]);
+
+    // Effect: locationName state change -> display user location in navigation header
+    useEffect(() => {
+        console.log(locationName);
+    }, [locationName]);
 
     if (errorMsg) {
         return (
@@ -101,7 +106,7 @@ export default function WeatherScreen() {
                     ))
                 )}
             </ScrollView>
-    );
+        );
     }
 }
 
