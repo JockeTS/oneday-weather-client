@@ -36,8 +36,6 @@ export default function WeatherScreen() {
 
     // Effect: location state change -> fetch weather data and set forecast state
     useEffect(() => {
-        // console.log(location);
-
         const fetchWeather = async () => {
             try {
                 // Get coordinates from location state
@@ -85,9 +83,8 @@ export default function WeatherScreen() {
         }
     }, [location]);
 
-    // Effect: locationName state change -> display user location in navigation header
+    // Effect: locationName state change -> display user location in text component
     useEffect(() => {
-        console.log(locationName);
     }, [locationName]);
 
     if (errorMsg) {
@@ -96,16 +93,19 @@ export default function WeatherScreen() {
         );
     } else if (location) {
         return (
-            <ScrollView ref={scrollViewRef} contentContainerStyle={styles.innerScrollView}>
-                {loading ? (
-                    <ActivityIndicator size="large" color="#4A90E2" />
-                ) : (
-                    // After fetching data - use weather groups state to create a view for each item
-                    forecast.map((weatherGroup: {startHour: string, endHour: string, weather: string, minTemp: string, maxTemp: string, icon: string},index: number) => (
-                        createWeatherGroupView(weatherGroup, index)
-                    ))
-                )}
-            </ScrollView>
+            <View style={styles.container}>
+                <Text style={styles.locationText}>{locationName}</Text>
+                <ScrollView ref={scrollViewRef} contentContainerStyle={styles.innerScrollView}>
+                    {loading ? (
+                        <ActivityIndicator size="large" color="#4A90E2" />
+                    ) : (
+                        // After fetching data - use weather groups state to create a view for each item
+                        forecast.map((weatherGroup: {startHour: string, endHour: string, weather: string, minTemp: string, maxTemp: string, icon: string},index: number) => (
+                            createWeatherGroupView(weatherGroup, index)
+                        ))
+                    )}
+                </ScrollView>
+            </View>
         );
     }
 }
@@ -208,6 +208,16 @@ function createWeatherGroups(hoursArray: any) {
 }
 
 const styles = StyleSheet.create({
+    container: {
+        flex: 1
+    },
+    locationText: {
+        backgroundColor: '#F4F6F9',
+        fontSize: 18,
+        color: '#333',
+        textAlign: 'center',
+        padding: 8,
+    },
     innerScrollView: {
         backgroundColor: '#4A90E2',
         height: 24 * 50,
