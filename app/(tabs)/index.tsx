@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { ScrollView, ActivityIndicator, View, Text, Image, StyleSheet } from 'react-native';
+import { ScrollView, ActivityIndicator, Button, View, Text, Image, StyleSheet } from 'react-native';
 import * as Location from 'expo-location';
+
+const today = new Date();
+const currentHour: number = today.getHours();
 
 export default function WeatherScreen() {
     // States
@@ -13,31 +16,42 @@ export default function WeatherScreen() {
 
     const scrollViewRef = useRef<ScrollView>(null);
 
-    const today = new Date();
-    const currentHour: number = today.getHours();
+    // Create array of hour strings from 00:00 - 23:00
+    const hours = [];
 
-    // Effect: component mount -> fetch weather data
+    for (let i = 0; i < 24; i++) {
+        const hour = String(i).padStart(2, "0") + ":00";
+        hours.push(hour);
+    }
+
+    // Effect: component mount -> get user location
     useEffect(() => {
-        async function getCurrentLocation() {
-            const { status } = await Location.requestForegroundPermissionsAsync();
-
-            if (status !== 'granted') {
-                setErrorMsg('Permission to access location was denied');
-                return;
-            }
-
-            const location = await Location.getCurrentPositionAsync({});
-            setLocation(location);
-        }
-
-        // Get user location after component has mounted
         getCurrentLocation();
     }, []);
 
     // Effect: location state change -> fetch weather data and set forecast state
     useEffect(() => {
-        const fetchWeather = async () => {
-            try {
+        if (location?.coords) {
+            fetchWeather();
+        }
+    }, [location]);
+
+    // Get user's location and set state (location)
+    async function getCurrentLocation() {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+
+        if (status !== 'granted') {
+            setErrorMsg('Permission to access location was denied');
+            return;
+        }
+
+        const location = await Location.getCurrentPositionAsync({});
+        setLocation(location);
+    }
+
+    // Get weather forecast from server and set states (forecast, locationName)
+    async function fetchWeather() {
+        try {
                 // Get coordinates from location state
                 const lat = location?.coords.latitude;
                 const lon = location?.coords.longitude;
@@ -46,9 +60,7 @@ export default function WeatherScreen() {
                     return;
                 }
 
-                // const response = await fetch("http://localhost:3000/");
-                // IP address for wired connection (?)
-                // const response = await fetch(`http://192.168.10.109:3000/weather/?lat=${lat}&lon=${lon}`);
+                // Fetch from server
                 const response = await fetch(`https://oneday-weather.onrender.com/weather?lat=${lat}&lon=${lon}`);
 
                 if (!response.ok) {
@@ -60,7 +72,7 @@ export default function WeatherScreen() {
                 const data = await response.json();
 
                 // Create weather groups from hoursArray and update forecast state
-                const hoursArray = data?.forecast?.forecastday[0]?.hour;
+                const hoursArray = data?.forecast?.forecastday[0]?.hour; console.log(hoursArray);
                 const weatherGroups = createWeatherGroups(hoursArray);
                 setForecast(weatherGroups);
 
@@ -76,17 +88,9 @@ export default function WeatherScreen() {
                 const scrollTo = currentHour * 50 / 2;
                 scrollViewRef.current?.scrollTo({ y: scrollTo, animated: true });
             }
-        };
+    }
 
-        if (location?.coords) {
-            fetchWeather();
-        }
-    }, [location]);
-
-    // Effect: locationName state change -> display user location in text component
-    useEffect(() => {
-    }, [locationName]);
-
+    // Return component
     if (errorMsg) {
         return (
             <Text>{errorMsg}</Text>
@@ -95,25 +99,34 @@ export default function WeatherScreen() {
         return (
             <View style={styles.container}>
                 <Text style={styles.locationText}>{locationName}</Text>
+
+                <Button 
+                    onPress={getCurrentLocation} 
+                    title="Refresh"
+                    color="#25292e"
+                    accessibilityLabel="Refresh the weather forecast."
+                />
+
                 <ScrollView ref={scrollViewRef} contentContainerStyle={styles.innerScrollView}>
-                    {loading ? (
-                        <ActivityIndicator size="large" color="#4A90E2" />
-                    ) : (
-                        // After fetching data - use weather groups state to create a view for each item
-                        forecast.map((weatherGroup: {startHour: string, endHour: string, weather: string, minTemp: string, maxTemp: string, icon: string},index: number) => (
-                            createWeatherGroupView(weatherGroup, index)
-                        ))
-                    )}
+                    <View style={styles.weatherContainer}>
+                        {loading ? (
+                            <View style={styles.loadingContainer}>
+                                <ActivityIndicator size="large" color="#F5D547" />
+                            </View>
+                        ) : (
+                            // After fetching data - use weather groups state to create a view for each item
+                            forecast.map((weatherGroup: {startHour: string, endHour: string, weather: string, minTemp: string, maxTemp: string, icon: string}, index: number) => (
+                                createWeatherCard(weatherGroup, index)
+                            ))
+                        )}
+                    </View>
                 </ScrollView>
             </View>
         );
     }
 }
 
-const createWeatherGroupView = (weatherGroup: {startHour: string, endHour: string, weather: string, minTemp: string, maxTemp: string, icon: string}, index: number) => {
-    const today = new Date();
-    const currentHour = today.getHours();
-
+function createWeatherCard(weatherGroup: {startHour: string, endHour: string, weather: string, minTemp: string, maxTemp: string, icon: string}, index: number) {
     // Display a single temperature for each weather group or a range if temperature varies within
     let displayTemp = weatherGroup.minTemp + " °C";
 
@@ -121,42 +134,35 @@ const createWeatherGroupView = (weatherGroup: {startHour: string, endHour: strin
         displayTemp = weatherGroup.minTemp + " - " + weatherGroup.maxTemp + " °C";
     }
 
-    // Return a highlighted weatherGroupView if currentHour matches
+    const flexSize = (parseInt(weatherGroup.endHour) - parseInt(weatherGroup.startHour));
+
+    // Set alternate background colors
+    let backgroundColor = "#F4F6F9";
+    let textColor = "#333";
+
     if (currentHour >= parseInt(weatherGroup.startHour) && currentHour < parseInt(weatherGroup.endHour) ) {
-        return (
-            <View key={index} style={[styles.weatherGroup, styles.activeBackground, { flex: (parseInt(weatherGroup.endHour) - parseInt(weatherGroup.startHour)) / 24 }]}>
-                <Text style={[styles.text, styles.activeText]}>
-                    {weatherGroup.startHour}
-                </Text>
+        backgroundColor = "#34d399";
+        textColor = "#FFF";
+    } 
 
-                <View style={styles.iconContainer}>
-                    <Image style={styles.icon} source={{uri: "https:" + weatherGroup.icon}} alt={weatherGroup.weather}/>
-                </View>
-
-                <Text style={[styles.text, styles.activeText]}>
-                    {displayTemp}
-                </Text>
-            </View>
-    );
-    }
-
-    // Return a regular weatherGroupView
     return (
-        <View key={index} style={[styles.weatherGroup, { flex: (parseInt(weatherGroup.endHour) - parseInt(weatherGroup.startHour)) / 24 }]}>
-            <Text style={styles.text}>
+        <View key={index} style={[styles.weatherCard, { height: 60 * flexSize, backgroundColor: backgroundColor }]}>
+            <Text style={[styles.weatherText, { color: textColor }]}>
                 {weatherGroup.startHour}
             </Text>
             
+            {/** Weather icon */}
             <View style={styles.iconContainer}>
                 <Image style={styles.icon} source={{uri: "https:" + weatherGroup.icon}} alt={weatherGroup.weather}/>
             </View>
 
-            <Text style={styles.text}>
+            {/** Temperature text */}
+            <Text style={[styles.weatherText, { color: textColor }]}>
                 {displayTemp}
             </Text>
         </View>
     );
-};
+}
 
 function createWeatherGroups(hoursArray: any) {
     const weatherGroups: any = [];
@@ -165,9 +171,9 @@ function createWeatherGroups(hoursArray: any) {
     let currentGroup = { 
         startHour: hoursArray[0].time.substr(-5, 5),
         endHour: String(parseInt(hoursArray[0].time.substr(-5, 5)) + 1).padStart(2, '0') + ':00', // hoursArray[0].time.substr(-5, 5),
-        minTemp: hoursArray[0].temp_c,
-        maxTemp: hoursArray[0].temp_c,
-        weather: hoursArray[0].condition.text.trim(),
+        minTemp: parseInt(hoursArray[0].temp_c),
+        maxTemp: parseInt(hoursArray[0].temp_c),
+        weather: hoursArray[0].condition.text.trim().toLowerCase(),
         icon: hoursArray[0].condition.icon
     };
 
@@ -179,10 +185,12 @@ function createWeatherGroups(hoursArray: any) {
         const tempDifference = Math.abs(current.temp_c - currentGroup.minTemp) > 5 || Math.abs(current.temp_c - currentGroup.maxTemp) > 5;
 
         // If current data items fits into current group (same weather type and less than 5 temperature difference)
-        if (current.condition.text.trim() === currentGroup.weather && !tempDifference) {
+        if (current.condition.text.trim().toLowerCase() === currentGroup.weather && !tempDifference) {
             // Update the current group to include the current data item
-            currentGroup.minTemp = Math.min(currentGroup.minTemp, current.temp_c);
-            currentGroup.maxTemp = Math.max(currentGroup.maxTemp, current.temp_c);
+            currentGroup.minTemp = Math.min(currentGroup.minTemp, parseInt(current.temp_c));
+            currentGroup.maxTemp = Math.max(currentGroup.maxTemp, parseInt(current.temp_c));
+            // currentGroup.minTemp = Math.trunc(Math.min(currentGroup.minTemp, current.temp_c));
+            // currentGroup.maxTemp = Math.trunc(Math.max(currentGroup.maxTemp, current.temp_c));
         } else {
             // If current item doesn't fit - push the contents of the previous current group onto the mergedData array
             weatherGroups.push({ ...currentGroup });
@@ -191,9 +199,9 @@ function createWeatherGroups(hoursArray: any) {
             currentGroup = {
                 startHour: current.time.substr(-5, 5),
                 endHour: current.time.substr(-5, 5),
-                minTemp: current.temp_c,
-                maxTemp: current.temp_c,
-                weather: current.condition.text.trim(),
+                minTemp: parseInt(current.temp_c),
+                maxTemp: parseInt(current.temp_c),
+                weather: current.condition.text.trim().toLowerCase(),
                 icon: current.condition.icon
             };
         }
@@ -218,38 +226,43 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         padding: 8,
     },
+    refreshButton: {
+        backgroundColor: '#25292e',
+        color: '#F5D547'
+    },
     innerScrollView: {
         backgroundColor: '#4A90E2',
-        height: 24 * 50,
+        flexDirection: 'row',
         paddingVertical: 5,
         paddingHorizontal: 10,
     },
-    weatherGroup: {
-        backgroundColor: '#F4F6F9',
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignContent: 'center'
+    },
+    weatherContainer: {
+        flex: 2
+    },
+    weatherCard: {
         flexDirection: 'row',
         alignItems: 'center',
         marginVertical: 5,
-        borderRadius: 8,
+        borderRadius: 8
     },
-    text: {
+    weatherText: {
         flex: 1,
         fontSize: 18,
         color: '#333',
-        textAlign: 'center'
+        textAlign: 'center',
     },
     iconContainer: {
-        flex: 0.5,
+        flex: 1,
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
     },
     icon: {
-        width: 50,
         height: 50,
-    },
-    activeBackground: {
-        backgroundColor: 'rgba(52, 211, 153, 1)'
-    },
-    activeText: {
-        color: '#FFF'
+        width: 50
     }
 });

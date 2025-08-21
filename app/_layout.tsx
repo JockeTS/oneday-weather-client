@@ -4,7 +4,7 @@ export default function RootLayout() {
     return <Stack 
         screenOptions={{
             headerShown: true,
-            title: 'OneDay Weather',
+            title: 'Hourly Weather',
             headerStyle: {
               backgroundColor: '#25292e',
             },
