@@ -36,6 +36,9 @@ npm install
 
 npx expo start
 
+### Static Web Build
+npx expo export --platform web
+
 ---
 
 ## 🧠 Lessons Learned
