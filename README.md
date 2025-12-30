@@ -2,6 +2,8 @@
 
 Intentionally minimalist weather app that shows the current day's forecast, split into hourly blocks. Built with React Native and Expo and using the WeatherAPI.com API for data.
 
+🔗 Live Demo: https://oneday-weather-client-web.onrender.com/
+
 Demonstrates the use of Expo Router for structured navigation, integration of REST APIs in React Native and deployment of React Native Web with static hosting.
 
 ## Setup / How to Run
