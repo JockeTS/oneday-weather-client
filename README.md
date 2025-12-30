@@ -1,53 +1,19 @@
 # OneDay Weather
 
-A simple, single-day weather forecast app built with **React Native** and **Expo**, designed to give users a clean and focused view of today’s weather conditions at their current location.
+Intentionally minimalist weather app that shows the current day's forecast, split into hourly blocks. Built with React Native and Expo and using the OpenWeather API for data.
 
----
+Demonstrates the use of Expo Router for structured navigation, integration of REST APIs in React Native and deployment of React Native Web with static hosting.
 
-## 🌦 Features
-
-- 🌍 Location-based weather forecast (via OpenWeather API)
-- 📅 One-day focused weather details
-- 🧭 Tab navigation layout using Expo Router
-- 📱 Mobile-first responsive design with custom UI
-- ☁️ Error handling for API/network issues
-
----
-
-## 🚀 Tech Stack
-
-- **React Native**
-- **Expo** (with Expo Router)
-- **TypeScript**
-- **OpenWeather API**
-- **Ionicons** (for tab icons)
-
----
-
-## 🛠 Installation
-
-Make sure you have **Node.js** and **Expo CLI** installed:
-
+## Setup / How to Run
+```
 npm install --global expo-cli
-
-git clone https://github.com/JockeTS/oneday-weather-client.git
+git clone https://github.com/JockeTS/weather-sensor-manager.git
 cd oneday-weather-client
 npm install
-
 npx expo start
+```
 
 ### Static Web Build
+```
 npx expo export --platform web
-
----
-
-## 🧠 Lessons Learned
-While building this app, I learned how to:
-
-* Use Expo Router for structured navigation
-
-* Integrate REST APIs in React Native
-
-* Deploy React Native Web with static hosting
-
-* Troubleshoot asset loading in exported builds
+```
