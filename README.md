@@ -1,6 +1,10 @@
 # OneDay Weather (Client)
 
+<img src="assets/screenshots/owc-1.png" alt="Detail" width="400"/>
+
 Intentionally minimalist weather app that shows the current day's forecast, split into hourly blocks. Built with React Native and Expo and using the WeatherAPI.com API for data.
+
+<img src="assets/screenshots/owc-2.png" alt="Overview" width="400"/>
 
 🔗 Live Demo: https://oneday-weather-client-web.onrender.com/
 
